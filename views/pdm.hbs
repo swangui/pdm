@@ -1,11 +1,25 @@
 <!DOCTYPE html>
-<html>
+<html ng-app="pdm">
 <head>
     <title>af-app</title>
     <script src="http://l.tbcdn.cn/apps/top/x/sdk.js?appkey={{app_key}}"></script>
     <script type="text/javascript" src="js/jquery-1.9.1.js"></script>
     <script type="text/javascript" src="js/jquery-barcode.js"></script>
+    <script type="text/javascript" src="js/angular.min.js"></script>
+    <script type="text/javascript" src="js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/pdm.js"></script>
+
+    <link rel="stylesheet" href="stylesheets/bootstrap.min.css">
+    <link rel="stylesheet" href="stylesheets/style.css">
 <script>
+conf = {
+  app_key: '{{app_key}}',
+  app_secret: '{{app_secret}}',
+  sign: '{{sign}}',
+  session: '{{params.top_session}}',
+  app_loginurl: '{{app_loginurl}}'
+}
+
 $(function(){
   get_sku_from_item();
 })
@@ -80,29 +94,37 @@ get_sku_from_item = function(){
 */
 }
 
+sync_sales = function(tid){
+  TOP.api({
+    method:'taobao.trades.sold.get',
+    start_created: '2014-01-01 00:00:00',
+    status: 'TRADE_FINISHED',
+    page_size: '100',
+    session:'{{params.top_session}}',
+    timestamp:'{{timestamp}}',
+    fields:'seller_nick,buyer_nick,title,type,created,sid,tid,seller_rate,buyer_rate,status,payment,discount_fee,adjust_fee,post_fee,total_fee,pay_time,end_time,modified,consign_time,buyer_obtain_point_fee,point_fee,real_point_fee,received_payment,commission_fee,pic_path,num_iid,num_iid,num,price,cod_fee,cod_status,shipping_type,receiver_name,receiver_state,receiver_city,receiver_district,receiver_address,receiver_zip,receiver_mobile,receiver_phone,orders.title,orders.pic_path,orders.price,orders.num,orders.iid,orders.num_iid,orders.sku_id,orders.refund_status,orders.status,orders.oid,orders.total_fee,orders.payment,orders.discount_fee,orders.adjust_fee,orders.sku_properties_name,orders.item_meal_name,orders.buyer_rate,orders.seller_rate,orders.outer_iid,orders.outer_sku_id,orders.refund_id,orders.seller_type'
+  },function(resp){
+    if(resp){
+      console.log(resp);
+      $('#trade-details').html(JSON.stringify(resp))
+    }else{
+      console.log('failure!');
+    }
+  });
+}
+
 </script>
 </head>
 <body>
-<div style="font-size:12px;">
-  hello how are you friend? 
-  <a href="{{app_loginurl}}">GET AUTH</a>
-  <br />
-  key:{{app_key}}
-  <br />
-  secret:{{app_secret}}
-  <br />
-  sign:{{sign}}
-  <br />
-  session:{{params.top_session}}
-  <hr />
+<div ng-controller="HomeCtrl">
+  <div ng-include="'html/home.html'"></div>
 </div>
 <div style="font-size:18px;">
-  Input Trade Number: <input type="text" style="font-size:18px;" /> 
-  <button style="font-size:18px;" onclick="display_trade_details($(this).prev().val());">Display Details</button>
-  <br />
+  <button style="font-size:18px;" onclick="sync_sales();">Sync Sales</button>
+  <button style="font-size:18px;">Suggest</button>
   <br />
 </div>
-<textarea id="trade-details" style="width:90%; height:300px; border:1px solid #000; display:none;"></textarea>
+<textarea id="trade-details" style="width:90%; height:300px; border:1px solid #000; xdisplay:none;"></textarea>
 
 <div>
   <table id="item-list" border="1">

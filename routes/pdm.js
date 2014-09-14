@@ -19,8 +19,8 @@ exports.index = function (req, res) {
 //     res.render('index', { title: 'Express','AppKey':config.AppKey });
 
 
-    res.render('index', {
-        app_loginurl:config.ContainerUrl(''),
+    res.render('pdm', {
+        app_loginurl:config.ContainerUrl('pdm'),
         app_key:config.AppKey,
         app_secret:config.AppSecret,
         sign:SignInfo.sign,

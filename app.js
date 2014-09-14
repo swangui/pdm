@@ -5,11 +5,9 @@
 var express = require('express')
     , routes = require('./routes')
     , http = require('http')
-     ,SDK=require('./SDK/index')
     , path = require('path');
-routes.successRoute=require('./routes/success');
-routes.main=require('./routes/main');
-routes.apitest=require('./routes/apitest');
+
+routes.pdm = require('./routes/pdm');
 
 var app = express();
 
@@ -34,11 +32,9 @@ if ('development' == app.get('env')) {
     app.use(express.errorHandler());
 }
 
+console.log(routes);
 app.get('/', routes.index);
-app.get('/success',routes.successRoute.index);
-app.get('/main',routes.main.index);
-app.get('/apitest',routes.apitest.index)
-app.post('/rest', SDK.index);
+app.get('/pdm', routes.pdm.index);
 
 
 http.createServer(app).listen(app.get('port'), function () {
