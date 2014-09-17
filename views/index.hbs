@@ -5,46 +5,157 @@
     <script src="http://l.tbcdn.cn/apps/top/x/sdk.js?appkey={{app_key}}"></script>
     <script type="text/javascript" src="js/jquery-1.9.1.js"></script>
     <script type="text/javascript" src="js/jquery-barcode.js"></script>
+<style>
+@media print{
+ .web-only {display:none;} 
+}
+.currency {text-align:right; padding-right:10px;}
+.midtext {text-align:center;}
+table {border:1px solid #000; border-collapse:collapse; border-spacing:0; font-size:12px;}
+</style>
 <script>
 $(function(){
   get_sku_from_item();
 })
 
 display_trade_details = function(tid){
+  reset_verification();
   TOP.api({
     method:'taobao.trade.fullinfo.get',
     session:'{{params.top_session}}',
     tid:tid,
     timestamp:'{{timestamp}}',
-    fields:'seller_nick,buyer_nick,orders'
+    fields:'seller_nick,buyer_nick,title,type,created,sid,tid,seller_rate,buyer_rate,status,payment,discount_fee,adjust_fee,post_fee,total_fee,pay_time,end_time,modified,consign_time,buyer_obtain_point_fee,point_fee,real_point_fee,received_payment,commission_fee,pic_path,num_iid,num_iid,num,price,cod_fee,cod_status,shipping_type,receiver_name,receiver_state,receiver_city,receiver_district,receiver_address,receiver_zip,receiver_mobile,receiver_phone,orders,seller_memo,promotion_details'
   },function(resp){
     if(resp){
       console.log(resp);
       $('#trade-details').html(JSON.stringify(resp))
-      var item_list = $('#item-list').html('<tr><th>SERIES</th><th>COLOR\/SPEC</th><th>BARCODE</th><th>NAME</th><th>QTY</th></tr>');
+      var item_list = $('#item-list').html('<tr><th>序号</th><th>货号</th><th>规格</th><th>条形码</th><th>商品名称</th><th>单价</th><th>数量</th><th>金额</th></tr>');
       $(resp.trade.orders.order).each(function(i,o){
         var html = '<tr>';
-        html += '<td>'+o.outer_iid.replace(/[#\$]/g,'')+'</td>';
-        html += '<td>'+o.sku_properties_name.replace(/,/,'')+'</td>';
-        html += '<td><div class="bcode" sku="'+o.outer_sku_id+'"></div></td>';
+        html += '<td class="midtext">'+(i+1)+'</td>';
+        html += '<td class="midtext">'+o.outer_iid.replace(/[#\$]/g,'')+'</td>';
+        html += '<td class="midtext">'+o.sku_properties_name.replace(/,/,'').replace(/^.*\:/,'')+'</td>';
+        var sku = o.outer_sku_id;
+        if(sku && sku!='' && !/^111111111111/.test(sku)){
+          html += '<td class="midtext bv" qty="'+o.num+'" cur="0" sku="'+o.outer_sku_id+'"><div class="bcode" sku="'+o.outer_sku_id+'"></div></td>';
+        }else{
+          html += '<td></td>';
+        }
         html += '<td>'+o.title+'</td>';
-        html += '<td>'+o.num+'</td></tr>';
+        html += '<td class="currency">'+o.price+'</td>';
+        html += '<td class="currency">'+o.num+'</td>';
+        html += '<td class="currency">'+(o.num*o.price*100).toString().replace(/(\d{2})$/,'.$1')+'</td></tr>';
         $(html).appendTo(item_list);
       })
       gen_barcode();
+      var trade = resp.trade;
+      $('#order-no').html(trade.sid);
+      $('#pay_time').html(trade.pay_time);
+      $('#receiver_name').html(trade.receiver_name);
+      $('#buyer_nick').html(trade.buyer_nick);
+      $('#receiver_mobile').html(trade.receiver_mobile);
+      $('#receiver_phone').html(trade.receiver_phone);
+      $('#receiver_address').html(trade.receiver_city + trade.receiver_district + trade.receiver_address);
+      $('#seller_memo').html(trade.seller_memo);
+      var seller_promo = trade.orders.order.map(function(o){return 0-parseFloat(o.adjust_fee);}).reduce(function(a,b){return a+b});
+      var system_discount = parseFloat(trade.total_fee) - parseFloat(trade.payment) + parseFloat(trade.post_fee) - parseInt(seller_promo);
+      $('#system_discount').html((system_discount*100).toString().replace(/(\d{2})$/,'.$1'));
+      $('#seller_promo').html(seller_promo == 0 ? '0.00' : (seller_promo*100).toString().replace(/(\d{2})$/,'.$1'));
+      $('#post_fee').html(trade.post_fee);
+      $('#payment').html(trade.payment);
+      var total_qty = trade.orders.order.map(function(o){return o.num}).reduce(function(a,b){return a+b});
+      $('#total_qty').html(total_qty);
+      $('#total_fee').html(trade.total_fee);
+
+/*
+      $('#').html(trade.);
+      $('#').html(trade.);
+      $('#').html(trade.);
+*/
     }else{
       console.log('failure!');
     }
   });
 }
 
+reset_verification = function(){
+  verify_counter = 0;
+  $('.bv').attr('cur', 0);
+  $('.validator').hide();
+  $('#vbtn').html('验证配货');
+}
+
+verify_trade = function(){
+  verify_counter = 0;
+  $('.bv').attr('cur', 0);
+  $('.validator').show().focus();
+}
+
+verify_next = function(input, event){
+  input = $(input);
+  var val = input.val();
+  if(event.keyCode == 13){
+    verify_counter++;
+    var item = $('.bv[sku='+val+']');
+    var cur = parseInt(item.attr('cur'));
+    cur+=1;
+    item.attr('cur', cur);
+    input.val('');
+    if(verify_counter == total_verify_qty){
+      var error = 0;
+      $('.bv').each(function(){
+        var bv = $(this);
+        var qty = parseInt(bv.attr('qty'));
+        var cur = parseInt(bv.attr('cur'));
+        if(qty != cur){
+          error++;
+        }
+      })
+      if(error>0){
+        play_fail('验证结果不正确，请重新验证');
+        reset_verification();
+        $('#vbtn').html('重新验证');
+      }else{
+        play_pass('恭喜，订单商品验证通过');
+        reset_verification();
+      }
+    }else{
+      $('.bv').each(function(){
+        var bv = $(this);
+        var qty = parseInt(bv.attr('qty'));
+        var cur = parseInt(bv.attr('cur'));
+        if(cur > qty){
+          play_fail('验证结果不正确，请重新验证');
+          reset_verification();
+          $('#vbtn').html('重新验证');
+        }
+      })
+    }
+  }
+}
+
 gen_barcode = function(){
+  total_verify_qty = 0;
   setTimeout(function(){
     $('.bcode').each(function(){
-      console.log($(this).attr('sku'))
-      $(this).barcode($(this).attr('sku'), "ean13",{barWidth:2, barHeight:50, fontSize:20});
+      var sku = $(this).attr('sku');
+      total_verify_qty += parseInt($(this).parent().attr('qty'));
+      $(this).barcode($(this).attr('sku'), "ean13",{barWidth:1, barHeight:30, fontSize:12});
     })
   },0)
+}
+
+play_pass = function(msg){
+  var audio = new Audio('audio/pass.wav');
+  audio.addEventListener("ended", function(){alert(msg)}, false);
+  audio.play();
+}
+
+play_fail = function(msg){
+  var audio = new Audio('audio/fail.wav');
+  audio.addEventListener("ended", function(){alert(msg)}, false);
+  audio.play();
 }
 
 get_sku_from_item = function(){
@@ -64,9 +175,9 @@ get_sku_from_item = function(){
         var sku = this.outer_id;
         html.push('<div class="bcode" sku="'+sku+'"></div><br />');
       });
-  
+
       $('#bc').html(html.join(''));
-    
+
       setTimeout(function(){
         $('.bcode').each(function(){
           console.log($(this).attr('sku'))
@@ -82,31 +193,57 @@ get_sku_from_item = function(){
 
 </script>
 </head>
-<body>
-<div style="font-size:12px;">
-  hello how are you friend? 
-  <a href="{{app_loginurl}}">GET AUTH</a>
-  <br />
-  key:{{app_key}}
-  <br />
-  secret:{{app_secret}}
-  <br />
-  sign:{{sign}}
-  <br />
-  session:{{params.top_session}}
-  <hr />
-</div>
-<div style="font-size:18px;">
-  Input Trade Number: <input type="text" style="font-size:18px;" /> 
-  <button style="font-size:18px;" onclick="display_trade_details($(this).prev().val());">Display Details</button>
-  <br />
-  <br />
-</div>
-<textarea id="trade-details" style="width:90%; height:300px; border:1px solid #000; display:none;"></textarea>
 
+<body>
+<div class="web-only">
+  <div style="font-size:12px;">
+    hello how are you friend?
+    <a href="{{app_loginurl}}">GET AUTH</a>
+    <br />
+    key:{{app_key}}
+    <br />
+    secret:{{app_secret}}
+    <br />
+    sign:{{sign}}
+    <br />
+    session:{{params.top_session}}
+    <hr />
+  </div>
+  <div style="font-size:18px;">
+    Input Trade Number: <input id="order-no-input" type="text" style="font-size:18px;" />
+    <button style="font-size:18px;" onclick="display_trade_details($(this).prev().val());">获取订单内容</button>
+    <button style="font-size:18px;" onclick="verify_trade();" id="vbtn">验证配货</button><input class="validator" type="text" onkeyup="verify_next(this,event)" style="display:none" />
+    <br />
+    <br />
+  </div>
+  <textarea id="trade-details" style="width:90%; height:300px; border:1px solid #000; display:none;"></textarea>
+</div>
+<div style="font:bold 16px arial; text-align:center;">发货单交易编号：<span id="order-no"></span></div><br />
+<div class="info" style="font-size:12px;">
+  <div>付款时间： <span id="pay_time"></span></div>
+  <div>收件人：<span id="receiver_name"></span>
+       昵称：<span id="buyer_nick"></span>
+       联系方式：<span id="receiver_mobile"></span>, <span id="receiver_phone"></span>
+       地址：<span id="receiver_address"></span>
+  </div>
+  <div>发件人：<span id="">小杰</span>
+       联系方式：<span id="">18602122393</span>
+       地址：<span id="">上海市闵行区浦驰路1335弄99号101室</span>
+  </div>
+  <div>卖家备注：<span id="seller_memo"></span>
+  </div>
+  <div>促销折扣：系统优惠：<span id="system_discount"></span>
+       卖家优惠：<span id="seller_promo"></span>
+       运费：<span id="post_fee"></span>
+       实付款：<span id="payment"></span>
+  </div>
+  <div>总计件数：<span id="total_qty"></span>
+       总价：<span id="total_fee"></span>
+  </div>
+</div><br />
 <div>
-  <table id="item-list" border="1">
-     
+  <table id="item-list" border="1" style="width:100%">
+
   <table>
 </div>
 <div id="bc"></div>

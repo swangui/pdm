@@ -30,3 +30,11 @@ exports.index = function (req, res) {
 
 
 };
+
+exports.item_insert = function (req, res) {
+    var params = url.parse(req.url, true).query;
+
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.write('hello json' + JSON.stringify(params));
+    res.end();
+};
