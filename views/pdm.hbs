@@ -20,78 +20,19 @@ conf = {
   app_loginurl: '{{app_loginurl}}'
 }
 
-$(function(){
-  get_sku_from_item();
-})
-
-display_trade_details = function(tid){
-  TOP.api({
-    method:'taobao.trade.fullinfo.get',
+use = function(method, params, fields, callback){
+  params = params || {};
+  callback = callback || function(res){console.log(res)};
+  var conf = {
+    method: method,
     session:'{{params.top_session}}',
-    tid:tid,
     timestamp:'{{timestamp}}',
-    fields:'seller_nick,buyer_nick,orders'
-  },function(resp){
-    if(resp){
-      console.log(resp);
-      $('#trade-details').html(JSON.stringify(resp))
-      var item_list = $('#item-list').html('<tr><th>SERIES</th><th>COLOR\/SPEC</th><th>BARCODE</th><th>NAME</th><th>QTY</th></tr>');
-      $(resp.trade.orders.order).each(function(i,o){
-        var html = '<tr>';
-        html += '<td>'+o.outer_iid.replace(/[#\$]/g,'')+'</td>';
-        html += '<td>'+o.sku_properties_name.replace(/,/,'')+'</td>';
-        html += '<td><div class="bcode" sku="'+o.outer_sku_id+'"></div></td>';
-        html += '<td>'+o.title+'</td>';
-        html += '<td>'+o.num+'</td></tr>';
-        $(html).appendTo(item_list);
-      })
-      gen_barcode();
-    }else{
-      console.log('failure!');
-    }
-  });
-}
-
-gen_barcode = function(){
-  setTimeout(function(){
-    $('.bcode').each(function(){
-      console.log($(this).attr('sku'))
-      $(this).barcode($(this).attr('sku'), "ean13",{barWidth:2, barHeight:50, fontSize:20});
-    })
-  },0)
-}
-
-get_sku_from_item = function(){
-/*
-  TOP.api({
-    method:'taobao.item.skus.get',
-    session:'{{params.top_session}}',
-    num_iids:'38401669451',
-    timestamp:'{{timestamp}}',
-    fields:'outer_id'
-  },function(resp){
-    if(resp){
-      console.log('success!');
-      console.log(resp)
-      var html = [];
-      $(resp.skus.sku).each(function(index){
-        var sku = this.outer_id;
-        html.push('<div class="bcode" sku="'+sku+'"></div><br />');
-      });
-  
-      $('#bc').html(html.join(''));
-    
-      setTimeout(function(){
-        $('.bcode').each(function(){
-          console.log($(this).attr('sku'))
-          $(this).barcode($(this).attr('sku'), "ean13",{barWidth:2, barHeight:50, fontSize:20});
-        })
-      },0)
-    }else{
-      console.log('failure!');
-    }
-  });
-*/
+    fields: fields
+  };
+  for(var p in params){
+    conf[p] = params[p];
+  };
+  TOP.api(conf, callback);
 }
 
 sync_sales = function(tid){
@@ -119,19 +60,6 @@ sync_sales = function(tid){
 <div ng-controller="HomeCtrl">
   <div ng-include="'html/home.html'"></div>
 </div>
-<div style="font-size:18px;">
-  <button style="font-size:18px;" onclick="sync_sales();">Sync Sales</button>
-  <button style="font-size:18px;">Suggest</button>
-  <br />
-</div>
-<textarea id="trade-details" style="width:90%; height:300px; border:1px solid #000; xdisplay:none;"></textarea>
-
-<div>
-  <table id="item-list" border="1">
-     
-  <table>
-</div>
-<div id="bc"></div>
 
 
 </body>
