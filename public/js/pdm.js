@@ -33,22 +33,24 @@ var pdm = angular.module('pdm', [])
           console.log('sku actual field length', Object.keys(res.skus.sku[0]).length);
           console.log('sku expected field length', sku_fields.split(',').length);
           skus = res.skus.sku;
+          var url = '/item_insert';
+          $.post(url, {data:skus})
         });
 
-    var url = '/item_insert';
-    $.post(url, {data:skus})
   };
 
-  $scope.import_trades = function(){
+  $scope.import_trades = function(page_no){
     use('taobao.trades.sold.get',{
            start_created: '2014-01-01 00:00:00',
            status: 'TRADE_FINISHED',
            page_size: '100',
-           page_no: 1
+           page_no: page_no
         },
         trade_fields,
         function(res){
           console.log(res)
+          var url = '/trade_insert';
+          $.post(url, {data:res.trades.trade})
         })
   }
 })

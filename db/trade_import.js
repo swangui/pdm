@@ -7,23 +7,29 @@ var data = fs.readFileSync('json/trades.json').toString();
 
 var tb = fs.readFileSync('trade_schema.js').toString();
 
-
-db.parallelize(function() {
-  data.trades.trade.forEach(function(row, index){
-    var tid = row.tid;
-    //console.log(index, tid)
-    db.each('select count(tid) from trade where tid = "'+tid+'";', function(err, result){
-      //console.log(tid, index, result['count(tid)'])
-      if(result['count(tid)'] == 0){
-        var values = tb.split(',').map(function(f){return '"'+row[f]+'"'}).join(',');
-        var sql = 'insert into trade values('+values+');';
-        db.run(sql);
-        //console.log(sql);
-      }
+var trade_import = function(data){
+  db.parallelize(function() {
+    data.forEach(function(row, index){
+      var tid = row.tid;
+      //console.log(index, tid)
+      db.each('select count(tid) from trade where tid = "'+tid+'";', function(err, result){
+        //console.log(tid, index, result['count(tid)'])
+        if(result['count(tid)'] == 0){
+          var values = tb.split(',').map(function(f){
+            if(f == 'orders'){
+              return "'"+JSON.stringify(row[f])+"'";
+            }else{
+              return '"'+row[f]+'"';
+            }
+          }).join(',');
+          var sql = 'insert into trade values('+values+');';
+          db.run(sql);
+          //console.log(sql);
+        }
+      })
     })
-  })
+  });
+}
 
-
-});
-
+trade_import(data.trades.trade);
 db.close();

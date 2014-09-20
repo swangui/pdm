@@ -2,6 +2,11 @@
  * GET home page.
  */
 
+var fs = require('fs');
+var sqlite3 = require('sqlite3').verbose();
+var db = new sqlite3.Database('/var/www/ffuwww/taobao/db/pdm.db');
+var tb = fs.readFileSync('/var/www/ffuwww/taobao/db/trade_schema.js').toString();
+
 var url = require("url");
 
 var config = require("../appconfig").Config,
@@ -36,5 +41,37 @@ exports.item_insert = function (req, res) {
 
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.write('hello json' + JSON.stringify(params));
+    res.end();
+};
+
+exports.trade_insert = function (req, res) {
+    var data = req.param('data');
+    var trade_import = function(data){
+      db.parallelize(function() {
+        data.forEach(function(row, index){
+          var tid = row.tid;
+          //console.log(index, tid)
+          db.each('select count(tid) from trade where tid = "'+tid+'";', function(err, result){
+            //console.log(tid, index, result['count(tid)'])
+            if(result['count(tid)'] == 0){
+              var values = tb.split(',').map(function(f){
+                if(f == 'orders'){
+                  return "'"+JSON.stringify(row[f])+"'";
+                }else{
+                  return '"'+row[f]+'"';
+                }
+              }).join(',');
+              var sql = 'insert into trade values('+values+');';
+              db.run(sql);
+              //console.log(sql);
+            }
+          });
+        });
+      });
+    };
+    trade_import(data);
+// Shall return the count of duplicated
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.write(JSON.stringify({status:'completed'}));
     res.end();
 };
