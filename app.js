@@ -35,7 +35,7 @@ if ('development' == app.get('env')) {
 console.log(routes);
 app.get('/', routes.index);
 app.get('/pdm', routes.pdm.index);
-app.get('/item_insert', routes.pdm.item_insert);
+app.post('/item_insert', routes.pdm.item_insert);
 
 
 http.createServer(app).listen(app.get('port'), function () {
