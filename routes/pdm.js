@@ -75,3 +75,19 @@ exports.trade_insert = function (req, res) {
     res.write(JSON.stringify({status:'completed'}));
     res.end();
 };
+
+exports.sales_stats = function (req, res) {
+  db.serialize(function() {
+    var results = [];
+    db.each('select num_iid,count(num_iid) as value from tb_order group by num_iid;',
+      function(err, result){
+        results.push(result);
+      },
+      function(){
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.write(JSON.stringify(results));
+        res.end();
+      }
+    )
+  })
+};

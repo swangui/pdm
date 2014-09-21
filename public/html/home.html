@@ -2,10 +2,10 @@
   <li class="active"><a href="#home" role="tab" data-toggle="tab">Home</a></li>
   <li><a href="#inventory" role="tab" data-toggle="tab">Inventory</a></li>
   <li><a href="#sales" role="tab" data-toggle="tab">Sales</a></li>
-  <li><a href="#predict" role="tab" data-toggle="tab">Predict</a></li>
+  <li><a href="#predict" role="tab" data-toggle="tab" ng-click="gen_sales_bubble();">Predict</a></li>
 </ul>
 <div class="tab-content" style="padding:10px;">
-  <div class="tab-pane fade in active" id="home">
+  <div class="tab-pane fade" id="home">
     {%hello%}, welcome to AF -
     Procurement Decision Maker 
     <a href="{%conf.app_loginurl%}">GET AUTH</a>
@@ -18,7 +18,7 @@
     <br />
     session:{%conf.session%}
   </div>
-  <div class="tab-pane fade" id="inventory" ng-include="'html/inventory.html'"></div>
+  <div class="tab-pane fade in active" id="inventory" ng-include="'html/inventory.html'"></div>
   <div class="tab-pane fade" id="sales" ng-include="'html/sales.html'"></div>
   <div class="tab-pane fade" id="predict" ng-include="'html/predict.html'"></div>
 </div>

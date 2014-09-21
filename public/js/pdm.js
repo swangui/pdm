@@ -52,5 +52,56 @@ var pdm = angular.module('pdm', [])
           var url = '/trade_insert';
           $.post(url, {data:res.trades.trade})
         })
+  };
+
+  $scope.gen_sales_bubble = function(){
+    console.log('generating bubble')
+    var diameter = 960,
+        format = d3.format(",d"),
+        color = d3.scale.category20c();
+    
+    var bubble = d3.layout.pack()
+        .sort(null)
+        .size([diameter, diameter])
+        .padding(1.5);
+    
+    var svg = d3.select("#bubble-body").append("svg")
+        .attr("width", diameter)
+        .attr("height", diameter)
+        .attr("class", "bubble");
+
+    d3.json('/sales_stats', function(error, root) {
+      var node = svg.selectAll(".node")
+          .data(bubble.nodes(classes(root))
+          .filter(function(d) { return !d.children; }))
+        .enter().append("g")
+          .attr("class", "node")
+          .attr("transform", function(d) { console.log(d); return "translate(" + d.x + "," + d.y + ")"; });
+    
+      node.append("circle")
+          .attr("r", function(d) { return d.r; })
+          .style("fill", function(d) { return color(d.num_iid); });
+    
+      node.append("text")
+          .attr("dy", ".3em")
+          .style("text-anchor", "middle")
+          .text(function(d) { return d.num_iid.substring(0, d.r / 3); });
+    });
+
+    function classes(root) {
+      var classes = root;
+    
+      return {children: classes};
+    }
   }
+
+
+
+
+
+
+
+
+
+
 })
