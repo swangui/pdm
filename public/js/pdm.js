@@ -2,10 +2,12 @@ var pdm = angular.module('pdm', [])
 
 .config(function($interpolateProvider){
         $interpolateProvider.startSymbol('{%').endSymbol('%}');
+  $("[data-toggle='tooltip']").tooltip();
     }
 )
 
 .controller('HomeCtrl', function($scope) {
+
   $scope.hello = 'hello world';
   $scope.conf = conf;
   $scope.conf.app_loginurl = $scope.conf.app_loginurl.replace(/&amp;/g,'&');
@@ -59,6 +61,8 @@ var pdm = angular.module('pdm', [])
   };
 
   $scope.gen_sales_bubble = function(){
+    $("[data-toggle='tooltip']").tooltip();
+
     console.log('generating bubble')
     $("#bubble-body").html('');
     var diameter = 960,
@@ -73,7 +77,8 @@ var pdm = angular.module('pdm', [])
     var svg = d3.select("#bubble-body").append("svg")
         .attr("width", diameter)
         .attr("height", diameter)
-        .attr("class", "bubble");
+        .attr("class", "bubble")
+        .style("margin", "-155px 0 0 -120px");
 
     d3.json('/sales_stats', function(error, root) {
       var dict = root.items;
@@ -107,7 +112,6 @@ var pdm = angular.module('pdm', [])
       return {children: classes};
     }
   }
-
 
 
 

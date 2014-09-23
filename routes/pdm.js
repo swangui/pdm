@@ -106,7 +106,7 @@ exports.sales_stats = function (req, res) {
   db.serialize(function() {
     var results = [];
     var items = {};
-    db.each('select num_iid,count(num_iid) as value from tb_order group by num_iid;',
+    db.each('select num_iid,sum(num) as value, count(num_iid) as sold_times from tb_order group by num_iid;',
       function(err, result){
         results.push(result);
       },
