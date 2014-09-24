@@ -22,17 +22,33 @@
       </table>
     </div>
   </div>
-  <div class="col-md-10">
-    <div style="position:absolute;">
-      <div>switch to bubble view</div>
-      <div><a href="#" data-toggle="tooltip" title="Tooltip on top">switch to grid view</a></div>
-      <div>switch to view Popularity 频次</div>
-      <div>switch to view Demand 数量</div>
-      <div>turn ID on/off</div>
+  <div class="col-md-7">
+    <div id="operations">
+      <div>Bubble View</div>
+      <div><a href="#" data-toggle="tooltip" title="Tooltip on top">tooltip</a></div>
+      <div><a href="#" ng-click="setChartType('popularity')">Popularity Perspective 频次观察</a></div>
+      <div><a href="#" ng-click="setChartType('demand')">Demand Perspective 数量观察</a></div>
+      <div>ID on/off</div>
       <div>enable blacklist mode (double click on circle)</div>
       <div>enable whitelist mode (click on circle)</div>
     </div>
     <div id="bubble-body"></div>
+  </div>
+  <div class="col-md-3">
+    <div>condition 1</div>
+    <div>condition 2</div>
+    <div>condition 3</div>
+    <div id="grid-body">Data
+      <table class="table">
+        <tr><th>Name/Sku</th><th class="demand">Demand</th><th class="popularity">Popularity</th><th>Stock</th></tr>
+        <tr ng-repeat="r in predict.data.results track by $index">
+          <td>{%r.title%}</td>
+          <td>{%r.demand%}</td>
+          <td>{%r.popularity%}</td>
+          <td>{%r.stock%}</td>
+        </tr>
+      </table>
+    </div>
   </div>
 </div>
 </div>

@@ -60,56 +60,95 @@ var pdm = angular.module('pdm', [])
         })
   };
 
+  $scope.predict = {
+    data: {items:{}, results:[]},
+    chartType: 'popularity', //or demand
+    viewType: 'bubble', //or grid
+    isIdOn: false, //or true
+    filteringMode: 'blacklist' //or whitelist
+  };
+
+  $scope.setChartType = function(chartType){
+    $scope.predict.chartType = chartType;
+    if($scope.predict.viewType == 'bubble'){
+      $scope.gen_sales_bubble();
+    }
+  }
+
   $scope.gen_sales_bubble = function(){
     $("[data-toggle='tooltip']").tooltip();
 
     console.log('generating bubble')
     $("#bubble-body").html('');
-    var diameter = 960,
+    var width = 900,
+        height = 700,
+        margin_left = -100,
+        margin_top = -50,
         format = d3.format(",d"),
         color = d3.scale.category20c();
     
     var bubble = d3.layout.pack()
         .sort(null)
-        .size([diameter, diameter])
-        .padding(1.5);
+        .size([width, height])
+        .padding(1);
     
     var svg = d3.select("#bubble-body").append("svg")
-        .attr("width", diameter)
-        .attr("height", diameter)
+        .attr("width", width)
+        .attr("height", height)
         .attr("class", "bubble")
-        .style("margin", "-155px 0 0 -120px");
 
-    d3.json('/sales_stats', function(error, root) {
+    var generate_bubble = function(root){
+      if($scope.predict.chartType=='popularity'){
+        root.results.map(function(el){ el.value = el.popularity; return el; })
+      }else if($scope.predict.chartType=='demand'){
+        root.results.map(function(el){ el.value = el.demand; return el; })
+      }
       var dict = root.items;
+      root.results.map(function(el){
+        var title = dict[el.num_iid] || el.num_iid;
+        if(!/^\d+$/.test(title)){
+          title = title.replace(/^([a-zA-Z0-9]+).*/, '$1');
+        };
+        el.title = title;
+        return el;
+      });
       var node = svg.selectAll(".node")
           .data(bubble.nodes(classes(root.results))
           .filter(function(d) { return !d.children; }))
         .enter().append("g")
           .attr("class", "node")
-          .attr("transform", function(d) { console.log(d); return "translate(" + d.x + "," + d.y + ")"; });
+          .attr("transform", function(d) {
+             return "translate(" + (d.x + margin_left) + "," + (d.y + margin_top) + ")"; });
     
       node.append("circle")
           .attr("r", function(d) { return d.r; })
-          .style("fill", function(d) { return color(d.num_iid); });
+          .style("fill", function(d) { return "#ccc"; });
+          //.style("fill", function(d) { return color(d.num_iid); });
     
       node.append("text")
           .attr("dy", ".3em")
           .style("text-anchor", "middle")
           .text(function(d) { 
-            var title = dict[d.num_iid] || d.num_iid;
-            if(!/^\d+$/.test(title)){
-              title = title.replace(/^([a-zA-Z0-9]+).*/, '$1');
-            }
+            var title = d.title;
             return title.substring(0, d.r / 3);
           });
           //.text(function(d) { return d.num_iid.substring(0, d.r / 3); });
-    });
+    }
 
-    function classes(root) {
+    var classes = function(root) {
       var classes = root;
     
       return {children: classes};
+    }
+
+    if($scope.predict.data.results.length > 0 || $scope.predict.data.items.length > 0){
+        generate_bubble($scope.predict.data);
+    }else{
+      d3.json('/sales_stats', function(error, root) {
+        generate_bubble(root);
+        $scope.predict.data = root;
+        $scope.$apply();
+      });
     }
   }
 

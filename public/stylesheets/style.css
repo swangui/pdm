@@ -12,3 +12,8 @@ td {
 text {
   font: 10px arial;
 }
+
+#operations div {
+  float:right;
+  border-left:2px solid #f09;
+}
