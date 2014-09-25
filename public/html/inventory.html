@@ -3,6 +3,25 @@
     <tr>
       <td>Item Id:</td><td><input type="text" id="item-id" /></td>
     </tr>
-    <tr><td></td><td><button ng-click="import_item_by_id();">Import</button></td></tr>
+    <tr><td></td><td><button ng-click="import_item_by_id();">Sync one</button></td></tr>
+    <tr>
+      <td>Inventory:</td><td></td>
+    </tr>
+    <tr><td></td><td>
+      <div ng-repeat="b in sync_batches track by $index">
+        <button ng-click="import_items($index);">
+        Sync every twenty {%$index%}</button>
+      </div>
+    </td></tr>
+  </table>
+</div>
+<div>
+  <table class="table">
+    <tr><th>Id</th><th>Title</th><th>Stock</th></tr>
+    <tr ng-repeat="r in items track by $index">
+      <td>{%r.num_iid%}</td>
+      <td>{%r.title%}</td>
+      <td>{%r.num%}</td>
+    </tr>
   </table>
 </div>

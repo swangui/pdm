@@ -10,6 +10,8 @@ var item_fields = fs.readFileSync('/var/www/ffuwww/taobao/db/item_schema.js').to
 
 var url = require("url");
 
+  db.run("BEGIN TRANSACTION");
+
 var config = require("../appconfig").Config,
     appkey = config.AppKey,
     appsecret = config.AppSecret,
@@ -41,7 +43,7 @@ exports.item_insert = function (req, res) {
     var data = req.param('data');
 
     var item_import = function(data){
-      var row = data.item;
+      var row = data;
       db.parallelize(function() {
         var num_iid = row.num_iid;
         console.log(num_iid)
@@ -63,7 +65,13 @@ exports.item_insert = function (req, res) {
         })
       });
     }
-    item_import(data);
+    if(data.hasOwnProperty('items')){
+      data.items.item.forEach(function(d){
+        item_import(d);
+      })
+    }else{
+      item_import(data.item);
+    }
 // Shall return the count of duplicated
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.write(JSON.stringify({status:'completed'}));
@@ -125,3 +133,21 @@ exports.sales_stats = function (req, res) {
     )
   })
 };
+
+exports.get_items = function (req, res) {
+  db.serialize(function() {
+    var items = [];
+    db.each('select tb_order.num_iid, tb_order.title, item.num from tb_order left outer join item on tb_order.num_iid = item.num_iid group by tb_order.num_iid;',
+      function(err, result){
+        items.push(result);
+      },
+      function(){
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.write(JSON.stringify({items:items}));
+        res.end();
+      }
+    )
+  })
+};
+
+  db.run("END");
