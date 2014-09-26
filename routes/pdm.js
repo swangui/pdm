@@ -114,7 +114,7 @@ exports.sales_stats = function (req, res) {
   db.serialize(function() {
     var results = [];
     var items = {};
-    db.each('select num_iid,sum(num) as demand, count(num_iid) as popularity from tb_order group by num_iid;',
+    db.each('select tb_order.num_iid,sum(tb_order.num) as demand, count(tb_order.num_iid) as popularity, item.num as stock from tb_order left outer join item on tb_order.num_iid = item.num_iid group by tb_order.num_iid;',
       function(err, result){
         results.push(result);
       },

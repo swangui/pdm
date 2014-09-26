@@ -1,47 +1,83 @@
-on mouseover display num_iid and title display full name
 <div class="container-fluid">
 <div class="row">
-  <div class="col-md-2">
-    <div>Blacklist
-      <table class="table">
-        <tr><th>Item Id</th><th>Name</th><th></th></tr>
-        <tr>
-          <td>Item Id</td>
-          <td>Name</td>
-          <td><i class="fa fa-remove"></i></td>
-        </tr>
-      </table>
-    </div>
-    <div>Whitelist
-      <table class="table">
-        <tr><th>Item Id</th><th>Name</th><th></th></tr>
-        <tr>
-          <td>Item Id</td>
-          <td>Name</td>
-          <td><i class="fa fa-remove"></i></td>
-        </tr>
-      </table>
-    </div>
-  </div>
-  <div class="col-md-7">
+  <div class="graphics">
     <div id="operations">
-      <div>Bubble View</div>
-      <div><a href="#" data-toggle="tooltip" title="Tooltip on top">tooltip</a></div>
-      <div><a href="#" ng-click="setChartType('popularity')">Popularity Perspective 频次观察</a></div>
-      <div><a href="#" ng-click="setChartType('demand')">Demand Perspective 数量观察</a></div>
-      <div>ID on/off</div>
-      <div>enable blacklist mode (double click on circle)</div>
-      <div>enable whitelist mode (click on circle)</div>
+      <div class="btn-group" data-toggle="buttons" style="float:right; margin-left:10px;">
+        <label class="btn btn-primary active">
+          <input type="radio" name="options" id="option1" checked> Free Pick
+        </label>
+        <label class="btn btn-primary">
+          <input type="radio" name="options" id="option2"> Blacklist
+        </label>
+        <label class="btn btn-primary">
+          <input type="radio" name="options" id="option3"> Whitelist
+        </label>
+      </div>
+      <div class="btn-group" data-toggle="buttons" style="float:right;">
+        <label class="btn btn-primary active">
+          <input type="radio" name="options" id="option1" checked> ID Off
+        </label>
+        <label class="btn btn-primary">
+          <input type="radio" name="options" id="option2"> On
+        </label>
+      </div>
+      <div class="btn-group" data-toggle="buttons">
+        <label class="btn btn-primary active" ng-click="setChartType('popularity')">
+          <input type="radio" name="options" id="option1" checked> Popularity
+        </label>
+        <label class="btn btn-primary" ng-click="setChartType('demand')">
+          <input type="radio" name="options" id="option2"> Demand
+        </label>
+      </div>
     </div>
     <div id="bubble-body"></div>
   </div>
-  <div class="col-md-3">
+  <div class="grids">
+    <div class="block">
+      <label>Blacklist</label>
+      <table class="table">
+        <tr><th class="icon-col"></th><th>Item Id</th><th>Name</th></tr>
+        <tr>
+          <td class="icon-col"><i class="fa fa-remove"></i></td>
+          <td>Item Id</td>
+          <td>Name</td>
+        </tr>
+      </table>
+    </div>
+    <div class="block">
+      <label>Whitelist</label>
+      <table class="table">
+        <tr><th class="icon-col"></th><th>Item Id</th><th>Name</th></tr>
+        <tr>
+          <td class="icon-col"><i class="fa fa-remove"></i></td>
+          <td>Item Id</td>
+          <td>Name</td>
+        </tr>
+      </table>
+    </div>
     <div>condition 1</div>
     <div>condition 2</div>
     <div>condition 3</div>
-    <div id="grid-body">Data
-      <table class="table">
-        <tr><th>Name/Sku</th><th class="demand">Demand</th><th class="popularity">Popularity</th><th>Stock</th></tr>
+    <div id="grid-body" class="block">
+      <label>Data</label>
+      <table class="table fixed-header" style="
+        position: fixed;
+        top: 51px;
+        display: none;
+        background: #fff;
+      ">
+        <tr>
+          <th>Name/Sku</th>
+          <th width="80" class="demand">Demand</th>
+          <th width="80" class="popularity">Popularity</th>
+          <th width="80">Stock</th></tr>
+      </table>
+      <table class="table data-body">
+        <tr>
+          <th>Name/Sku</th>
+          <th width="80" class="demand">Demand</th>
+          <th width="80" class="popularity">Popularity</th>
+          <th width="80">Stock</th></tr>
         <tr ng-repeat="r in predict.data.results track by $index">
           <td>{%r.title%}</td>
           <td>{%r.demand%}</td>

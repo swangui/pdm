@@ -1,12 +1,18 @@
 var pdm = angular.module('pdm', [])
 
 .config(function($interpolateProvider){
-        $interpolateProvider.startSymbol('{%').endSymbol('%}');
-  $("[data-toggle='tooltip']").tooltip();
-    }
-)
+    $interpolateProvider.startSymbol('{%').endSymbol('%}');
+})
 
 .controller('HomeCtrl', function($scope, $http) {
+  $(window).scroll(function(){
+    if($('body').scrollTop() >= 318){
+      $('.fixed-header').width($('.data-body').width()).show();
+    }else{
+      $('.fixed-header').hide();
+    }
+  })
+
   $http.get('/get_items').success(function(res){
     $scope.items = res.items;
     console.log('get_items', res);
@@ -115,8 +121,8 @@ var pdm = angular.module('pdm', [])
     console.log('generating bubble')
     $("#bubble-body").html('');
     var width = 900,
-        height = 900,
-        margin_left = -100,
+        height = 800,
+        margin_left = -80,
         margin_top = -50,
         format = d3.format(",d"),
         color = d3.scale.category20c();
@@ -149,11 +155,11 @@ var pdm = angular.module('pdm', [])
       var node = svg.selectAll(".node")
           .data(bubble.nodes(classes(root.results))
           .filter(function(d) { return !d.children; }))
-        .enter().append("g")
-          .attr("class", "node")
-          .attr("transform", function(d) {
-             return "translate(" + (d.x + margin_left) + "," + (d.y + margin_top) + ")"; });
-    
+          .enter().append("g")
+            .attr("class", "node")
+            .attr("transform", function(d) {
+               return "translate(" + (d.x + margin_left) + "," + (d.y + margin_top) + ")"; });
+
       node.append("circle")
           .attr("r", function(d) { return d.r; })
           .style("fill", function(d) { return "#ccc"; });

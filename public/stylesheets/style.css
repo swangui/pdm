@@ -13,7 +13,35 @@ text {
   font: 10px arial;
 }
 
-#operations div {
-  float:right;
-  border-left:2px solid #f09;
+.nav-tabs {
+position: fixed;
+z-index: 99;
+background: #FFF;
+margin-top: -10px;
+padding-top: 10px;
+width: 100%;
+}
+
+.tab-content {
+padding-top: 50px;
+}
+
+.graphics {
+width:770px; position:fixed; margin:0 15px;
+}
+.grids{
+padding-left:800px;
+}
+.block {
+border: 1px solid #eee;
+border-radius: 4px;
+margin-bottom: 8px;
+}
+.block label { margin: 5px 8px; }
+.block table { margin: 0; }
+.icon-col { width:30px; text-align:right;}
+.container-fluid { padding:0; }
+#bubble-body {
+width: 770px;
+overflow: hidden;
 }
