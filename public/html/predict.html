@@ -4,7 +4,7 @@
     <div id="operations">
       <div class="btn-group" data-toggle="buttons" style="float:right; margin-left:10px;">
         <label class="btn btn-primary active">
-          <input type="radio" name="options" id="option1" checked> Free Pick
+          <input type="radio" name="options" id="option1" checked> Drilldown
         </label>
         <label class="btn btn-primary">
           <input type="radio" name="options" id="option2"> Blacklist
@@ -77,13 +77,21 @@
           <th>Name/Sku</th>
           <th width="80" class="demand">Demand</th>
           <th width="80" class="popularity">Popularity</th>
-          <th width="80">Stock</th></tr>
-        <tr ng-repeat="r in predict.data.results track by $index">
-          <td>{%r.title%}</td>
-          <td>{%r.demand%}</td>
-          <td>{%r.popularity%}</td>
-          <td>{%r.stock%}</td>
+          <th width="80">Stock</th>
         </tr>
+        <tbody ng-repeat="r in predict.data.results track by $index">
+          <tr>
+            <td>{%r.title%}</td>
+            <td>{%r.demand%}</td>
+            <td>{%r.popularity%}</td>
+            <td>{%r.stock%}</td>
+          </tr>
+          <tr>
+            <td colspan="4" class="chart-container" height="220">
+              <button ng-click="init_chart($event, r.num_iid)">load chart {%r.num_iid%}</button>
+            </td>
+          </tr>
+        </tbody>
       </table>
     </div>
   </div>

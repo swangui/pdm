@@ -25,12 +25,12 @@ width: 100%;
 .tab-content {
 padding-top: 50px;
 }
-
+.row {margin-right:0;}
 .graphics {
 width:770px; position:fixed; margin:0 15px;
 }
 .grids{
-padding-left:800px;
+padding-left:795px;
 }
 .block {
 border: 1px solid #eee;
@@ -44,4 +44,17 @@ margin-bottom: 8px;
 #bubble-body {
 width: 770px;
 overflow: hidden;
+}
+path { 
+    stroke: steelblue;
+    stroke-width: 2;
+    fill: none;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: grey;
+    stroke-width: 1;
+    shape-rendering: crispEdges;
 }

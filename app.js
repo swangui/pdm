@@ -39,6 +39,7 @@ app.post('/item_insert', routes.pdm.item_insert);
 app.post('/trade_insert', routes.pdm.trade_insert);
 app.get('/sales_stats', routes.pdm.sales_stats);
 app.get('/get_items', routes.pdm.get_items);
+app.get('/get_sales', routes.pdm.get_sales);
 
 
 http.createServer(app).listen(app.get('port'), function () {
