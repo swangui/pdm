@@ -154,7 +154,7 @@ exports.get_sales = function (req, res) {
   var num_iid = req.param('num_iid');
   db.serialize(function() {
     var sales = [];
-    db.each('select strftime("%Y%m", consign_time) as ym,sum(num) as demand, count(num) as popularity from tb_order where num_iid = '+num_iid+' group by ym;',
+    db.each('select strftime("%Y%m", end_time) as ym, sum(num) as demand, count(num) as popularity from tb_order where num_iid = '+num_iid+' group by ym;',
       function(err, result){
         sales.push(result);
       },

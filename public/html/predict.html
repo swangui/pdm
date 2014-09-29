@@ -79,19 +79,17 @@
           <th width="80" class="popularity">Popularity</th>
           <th width="80">Stock</th>
         </tr>
-        <tbody ng-repeat="r in predict.data.results track by $index">
-          <tr>
-            <td>{%r.title%}</td>
-            <td>{%r.demand%}</td>
-            <td>{%r.popularity%}</td>
-            <td>{%r.stock%}</td>
-          </tr>
-          <tr>
-            <td colspan="4" class="chart-container" height="220">
-              <button ng-click="init_chart($event, r.num_iid)">load chart {%r.num_iid%}</button>
-            </td>
-          </tr>
-        </tbody>
+      </table>
+      <table class="table" ng-repeat="r in predict.data.results track by $index">
+        <tr style="cursor:pointer;" ng-click="toggle_chart($event, r.num_iid);">
+          <td>{%r.title%}</td>
+          <td width="80">{%r.demand%}</td>
+          <td width="80">{%r.popularity%}</td>
+          <td width="80">{%r.stock%}</td>
+        </tr>
+        <tr style="display:none;">
+          <td colspan="4" class="chart-container" height="230">Loading...</td>
+        </tr>
       </table>
     </div>
   </div>

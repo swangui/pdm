@@ -193,37 +193,82 @@ var pdm = angular.module('pdm', [])
     }
   }
 
-  $scope.init_chart = function($event, num_iid){
+  $scope.init_chart = function(container, num_iid){
     console.log('init-ing chart');
     
-    var canvas = $($event.target).parent().html('')
+    var canvas = container.html('')
                  .append('<div class="canvas"></div>')
                  .find('.canvas');
     
     var url = '/get_sales';
     $.get(url, {num_iid:num_iid}).success(function(res){
       console.log('get_sales', res);
-    })
+      var ymd = [];
+      var demand = [];
+      var popularity = [];
+      res.sales.map(function(s){
+        var y = parseInt(s.ym.replace(/\d{2}$/,''));
+        var m = parseInt(s.ym.replace(/^\d{4}/,''));
+        var ymdate = new Date(y, m-1, 1);
+        s.ym = ymdate;
+        ymd.push(ymdate);
+        demand.push(s.demand);
+        popularity.push(s.popularity);
+      })
+      var dx_min = d3.min(ymd);
+          dx_min = new Date(dx_min.getFullYear(), dx_min.getMonth()-1, 14);
+      var dx_max = new Date();
+          dx_max = new Date(dx_max.getFullYear(), dx_max.getMonth()+6, 1);
+      console.log(dx_min, dx_max, dx_max);
+      var domainX = [dx_min, dx_max];
 
-    $scope.line_chart(canvas.get(0));
+      var dyDemand_max = d3.max(demand)*3;
+      var domainYDemand = [0, dyDemand_max];
+
+      var dyPopularity_max = d3.max(popularity)*3;
+      var domainYPopularity = [0, dyPopularity_max];
+      $scope.line_chart(canvas.get(0), domainX, domainYDemand, domainYPopularity, res.sales);
+    });
+
   }
 
-  $scope.line_chart = function(canvas){
-    var margin = {top: 10, right: 10, bottom: 30, left: 30},
-        width = 500 - margin.left - margin.right,
+  $scope.toggle_chart = function($event, num_iid){
+    var handler = $($event.target).parents('tr')
+    var sibling = handler.next();
+    if(sibling.is(':visible')==true){
+      sibling.hide();
+    }else if(sibling.is(':visible')==false){
+      sibling.show();
+    };
+    if(sibling.find('div').size()==0){
+      setTimeout(function(){
+        $scope.init_chart(sibling.find('td:first'), num_iid);
+      }, 200)
+    }
+  }
+
+  $scope.line_chart = function(canvas, domainX, domainYDemand, domainYPopularity, data){
+    var margin = {top: 20, right: 30, bottom: 30, left: 30},
+        width = 550 - margin.left - margin.right,
         height = 200 - margin.top - margin.bottom;
     
-    var parseDate = d3.time.format("%d-%b-%y").parse;
-    
     var x = d3.time.scale().range([0, width]);
-    var y = d3.scale.linear().range([height, 0]);
+    var yDemand = d3.scale.linear().range([height, 0]);
+    var yPopularity = d3.scale.linear().range([height, 0]);
     
     var xAxis = d3.svg.axis().scale(x)
-        .orient("bottom").ticks(5);
+        .orient("bottom").ticks(12).tickSize(10,10);
     
-    var yAxis = d3.svg.axis().scale(y)
+    var yAxisDemand = d3.svg.axis().scale(yDemand)
         .orient("left").ticks(5);
-    
+
+    var yAxisPopularity = d3.svg.axis().scale(yPopularity)
+        .orient("right").ticks(5);
+
+    var valueline = d3.svg.line()
+        .x(function(d) { return x(d.ym); })
+        .y(function(d) { return yDemand(d.demand); });
+
     var svg = d3.select(canvas)
         .append("svg")
             .attr("width", width + margin.left + margin.right)
@@ -231,8 +276,9 @@ var pdm = angular.module('pdm', [])
         .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
     
-        x.domain([new Date(2010, 7, 1), new Date(2012, 7, 1)]);
-        y.domain([0, 100]);
+        x.domain(domainX);
+        yDemand.domain(domainYDemand);
+        yPopularity.domain(domainYPopularity);
     
         svg.append("g")         // Add the X Axis
             .attr("class", "x axis")
@@ -241,8 +287,41 @@ var pdm = angular.module('pdm', [])
     
         svg.append("g")         // Add the Y Axis
             .attr("class", "y axis")
-            .call(yAxis);
-      }
+            .call(yAxisDemand);
+
+        svg.append("g")         // Add the Y Axis
+            .attr("class", "y axis")
+            .attr("transform", "translate(" + width + " ,0)")
+            .call(yAxisPopularity);
+
+        var bar_width = (width-margin.left-margin.right)/(data.length+6)*0.9;
+        console.log(bar_width);
+        svg.selectAll("bar")
+            .data(data)
+            .enter().append("rect")
+              .style("fill", "MediumTurquoise")
+              .attr("x", function(d) { return x(d.ym) - (bar_width/2) })
+              .attr("width", bar_width)
+              .attr("y", function(d) { return yPopularity(d.popularity); })
+              .attr("height", function(d) { return height - yPopularity(d.popularity); });
+
+        svg.append("path")      // Add the valueline path.
+        .attr("d", valueline(data));
+
+        svg.append("text")
+            .attr("y",0-margin.top)
+            .attr("x",0)
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .text("Demand");
+
+        svg.append("text")
+            .attr("y",0-margin.top)
+            .attr("x",width)
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .text("Popularity");
+  }
 
 
 
