@@ -2,15 +2,17 @@
 <div class="row">
   <div class="graphics">
     <div id="operations">
-      <div class="btn-group" data-toggle="buttons" style="float:right; margin-left:10px;">
-        <label class="btn btn-primary active">
-          <input type="radio" name="options" id="option1" checked> Drilldown
+      <div class="btn-group"
+           data-toggle="buttons"
+           style="float:right; margin-left:10px;">
+        <label class="btn btn-primary active" ng-click="set_op_mode('drilldown')">
+          <input type="radio" name="op-mode" class="op-mode"> Drilldown
         </label>
-        <label class="btn btn-primary">
-          <input type="radio" name="options" id="option2"> Blacklist
+        <label class="btn btn-primary" ng-click="set_op_mode('blacklist')">
+          <input type="radio" name="op-mode" class="op-mode"> Blacklist
         </label>
-        <label class="btn btn-primary">
-          <input type="radio" name="options" id="option3"> Whitelist
+        <label class="btn btn-primary" ng-click="set_op_mode('whitelist')">
+          <input type="radio" name="op-mode" class="op-mode"> Whitelist
         </label>
       </div>
       <div class="btn-group" data-toggle="buttons" style="float:right;">
@@ -22,10 +24,10 @@
         </label>
       </div>
       <div class="btn-group" data-toggle="buttons">
-        <label class="btn btn-primary active" ng-click="setChartType('popularity')">
+        <label class="btn btn-primary active" ng-click="set_chart_type('popularity')">
           <input type="radio" name="options" id="option1" checked> Popularity
         </label>
-        <label class="btn btn-primary" ng-click="setChartType('demand')">
+        <label class="btn btn-primary" ng-click="set_chart_type('demand')">
           <input type="radio" name="options" id="option2"> Demand
         </label>
       </div>
@@ -34,8 +36,8 @@
   </div>
   <div class="grids">
     <div class="block">
-      <label>Blacklist</label>
-      <table class="table">
+      <label class="f-blacklist filter-toggler">Blacklist &nbsp;<i class="fa fa-caret-right"></i></label>
+      <table class="table" style="display:none;">
         <tr><th class="icon-col"></th><th>Item Id</th><th>Name</th></tr>
         <tr>
           <td class="icon-col"><i class="fa fa-remove"></i></td>
@@ -45,8 +47,8 @@
       </table>
     </div>
     <div class="block">
-      <label>Whitelist</label>
-      <table class="table">
+      <label class="f-whitelist filter-toggler">Whitelist &nbsp;<i class="fa fa-caret-right"></i></label>
+      <table class="table" style="display:none;">
         <tr><th class="icon-col"></th><th>Item Id</th><th>Name</th></tr>
         <tr>
           <td class="icon-col"><i class="fa fa-remove"></i></td>
@@ -55,9 +57,17 @@
         </tr>
       </table>
     </div>
-    <div>condition 1</div>
-    <div>condition 2</div>
-    <div>condition 3</div>
+    <div class="block">
+      <label class="filter-toggler">Advanced Filters &nbsp;<i class="fa fa-caret-right"></i></label>
+      <table class="table" style="display:none;">
+        <tr><th class="icon-col"></th><th>Filter</th><th></th></tr>
+        <tr>
+          <td class="icon-col"><i class="fa fa-reply"></i></td>
+          <td>Filter Name</td>
+          <td></td>
+        </tr>
+      </table>
+    </div>
     <div id="grid-body" class="block">
       <label>Data</label>
       <table class="table fixed-header" style="

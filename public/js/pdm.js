@@ -5,13 +5,50 @@ var pdm = angular.module('pdm', [])
 })
 
 .controller('HomeCtrl', function($scope, $http) {
-  $(window).scroll(function(){
-    if($('body').scrollTop() >= 318){
-      $('.fixed-header').width($('.data-body').width()).show();
-    }else{
-      $('.fixed-header').hide();
+  $scope.init_predict = function(){
+    $scope.predict = {
+      data: {items:{}, results:[]},
+      chartType: 'popularity', //or demand
+      viewType: 'bubble', //or grid
+      isIdOn: false, //or true
+      filteringMode: 'blacklist' //or whitelist
+    };
+
+    $(window).scroll(function(){
+      if($('body').scrollTop() >= 318){
+        $('.fixed-header').width($('.data-body').width()).show();
+      }else{
+        $('.fixed-header').hide();
+      }
+    });
+
+    $('.filter-toggler').click(function(){
+      var toggler = $(this);
+      var panel = toggler.next();
+      if(panel.is(':visible')==true){
+        panel.hide();
+        toggler.find('.fa').removeClass('fa-caret-down').addClass('fa-caret-right');
+      }else{
+        panel.show();
+        toggler.find('.fa').removeClass('fa-caret-right').addClass('fa-caret-down');
+      }
+    });
+
+    $scope.op_mode = 'drilldown';
+    $scope.set_op_mode = function(mode){
+      if(mode=='blacklist'){
+        $('.f-blacklist').next().hide().prev().trigger('click').effect('highlight', {color: '#428BCA'}, 500);
+      }else if(mode=='whitelist'){
+        $('.f-whitelist').next().hide().prev().trigger('click').effect('highlight', {color: '#428BCA'}, 500);
+      }
+      $scope.op_mode = mode;
+      console.log('operating mode', $scope.op_mode);
     }
-  })
+    console.log('init op_mode', $scope.op_mode);
+
+    $scope.gen_sales_bubble();
+  }
+
 
   $http.get('/get_items').success(function(res){
     $scope.items = res.items;
@@ -100,15 +137,7 @@ var pdm = angular.module('pdm', [])
         })
   };
 
-  $scope.predict = {
-    data: {items:{}, results:[]},
-    chartType: 'popularity', //or demand
-    viewType: 'bubble', //or grid
-    isIdOn: false, //or true
-    filteringMode: 'blacklist' //or whitelist
-  };
-
-  $scope.setChartType = function(chartType){
+  $scope.set_chart_type = function(chartType){
     $scope.predict.chartType = chartType;
     if($scope.predict.viewType == 'bubble'){
       $scope.gen_sales_bubble();
@@ -122,7 +151,7 @@ var pdm = angular.module('pdm', [])
     $("#bubble-body").html('');
     var width = 900,
         height = 800,
-        margin_left = -80,
+        margin_left = -70,
         margin_top = -50,
         format = d3.format(",d"),
         color = d3.scale.category20c();
@@ -130,7 +159,7 @@ var pdm = angular.module('pdm', [])
     var bubble = d3.layout.pack()
         .sort(null)
         .size([width, height])
-        .padding(1);
+        .padding(3);
     
     var svg = d3.select("#bubble-body").append("svg")
         .attr("width", width)
@@ -158,10 +187,20 @@ var pdm = angular.module('pdm', [])
           .enter().append("g")
             .attr("class", "node")
             .attr("transform", function(d) {
-               return "translate(" + (d.x + margin_left) + "," + (d.y + margin_top) + ")"; });
+               return "translate(" + (d.x + margin_left) + "," + (d.y + margin_top) + ")"; })
+            .on("mouseover", function(){
+              d3.select(this).selectAll("circle")
+                .style("stroke", "#428BCA")
+            })
+            .on("mouseout", function(){
+              d3.select(this).selectAll("circle")
+                .style("stroke", "#ccc")
+            });
 
       node.append("circle")
           .attr("r", function(d) { return d.r; })
+          .style("stroke", "#ccc")
+          .style("stroke-width", 2)
           .style("fill", function(d) { return "#ccc"; });
           //.style("fill", function(d) { return color(d.num_iid); });
     

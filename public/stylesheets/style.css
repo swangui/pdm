@@ -37,7 +37,7 @@ border: 1px solid #eee;
 border-radius: 4px;
 margin-bottom: 8px;
 }
-.block label { margin: 5px 8px; }
+.block label { padding: 5px 8px; margin:0; border-top-left-radius:3px; border-top-right-radius:3px; }
 .block table { margin: 0; }
 .icon-col { width:30px; text-align:right;}
 .container-fluid { padding:0; }
@@ -58,3 +58,7 @@ path {
     stroke-width: 1;
     shape-rendering: crispEdges;
 }
+
+.node {cursor:default;}
+.filter-toggler{cursor:pointer; display:block;}
+
