@@ -78,6 +78,14 @@ var pdm = angular.module('pdm', [])
   var trade_fields = 'seller_nick,iid,pic_path,payment,snapshot_url,snapshot,seller_rate,post_fee,buyer_alipay_no,receiver_name,receiver_state,receiver_address,receiver_zip,receiver_mobile,receiver_phone,consign_time,seller_alipay_no,seller_mobile,seller_phone,seller_name,seller_email,available_confirm_fee,received_payment,timeout_action_time,is_3D,orders,promotion,promotion_details,tid,num,num_iid,status,title,type,price,seller_cod_fee,discount_fee,point_fee,has_post_fee,total_fee,is_lgtype,is_brand_sale,is_force_wlb,lg_aging,lg_aging_type,created,pay_time,modified,end_time,buyer_message,alipay_id,alipay_no,alipay_url,buyer_memo,buyer_flag,seller_memo,seller_flag,invoice_name,invoice_type,buyer_nick,buyer_area,buyer_email,has_yfx,yfx_fee,yfx_id,yfx_type,has_buyer_message,area_id,credit_card_fee,nut_feature,step_trade_status,step_paid_fee,mark_desc,eticket_ext,send_time,shipping_type,buyer_cod_fee,express_agency_fee,adjust_fee,buyer_obtain_point_fee,cod_fee,trade_from,alipay_warn_msg,cod_status,can_rate,service_orders,commission_fee,trade_memo,buyer_rate,trade_source,seller_can_rate,is_part_consign,is_daixiao,real_point_fee,receiver_city,receiver_district,arrive_interval,arrive_cut_time,consign_interval,async_modified,service_tags,o2o,o2o_guide_id,o2o_shop_id,o2o_guide_name,o2o_shop_name,o2o_delivery,zero_purchase,alipay_point,pcc_af,o2o_out_trade_id,is_wt';
   var item, skus;
 
+  /* graph settings */
+  var width = 900,
+      height = 800,
+      margin_left = -70,
+      margin_top = -50,
+      format = d3.format(",d"),
+      color = d3.scale.category20c();
+
   $scope.import_items = function(batch_no){
     var num_iids = $scope.sync_batches[batch_no].map(function(el){return el.num_iid}).join(',');
     use('taobao.items.list.get', {
@@ -144,27 +152,55 @@ var pdm = angular.module('pdm', [])
     }
   }
 
+  $scope.selectSku = function(){
+    var circle = $(this);
+    num_iid = circle.attr('num_iid');
+    if($scope.op_mode == 'blacklist'){
+      circle.remove();//hide();
+      var updated = $.grep($scope.predict.data.results, function(d){ return d.num_iid!=num_iid });
+      $scope.predict.data.results = updated;
+      $scope.trans_bubble();
+    }
+  }
+
+  $scope.trans_bubble = function(){
+      if($scope.predict.chartType=='popularity'){
+        $scope.predict.data.results.map(function(el){ el.value = el.popularity; return el; })
+      }else if($scope.predict.chartType=='demand'){
+        $scope.predict.data.results.map(function(el){ el.value = el.demand; return el; })
+      }
+      var bubble = $scope.bubble;
+      var svg = $scope.svg;
+      var classes = $scope.classes;
+      var node = svg.selectAll(".node")
+          .data(bubble.nodes(classes($scope.predict.data.results))
+          .filter(function(d) { console.log(1); return !d.children; }))
+          .transition()
+            .attr("transform", function(d) {
+               return "translate(" + (d.x + margin_left) + "," + (d.y + margin_top) + ")"; })
+          .select("circle")
+          .transition()
+            .attr("r", function(d) { console.log(d.r); return d.r; })
+            
+  }
+
   $scope.gen_sales_bubble = function(){
     $("[data-toggle='tooltip']").tooltip();
 
     console.log('generating bubble')
     $("#bubble-body").html('');
-    var width = 900,
-        height = 800,
-        margin_left = -70,
-        margin_top = -50,
-        format = d3.format(",d"),
-        color = d3.scale.category20c();
     
     var bubble = d3.layout.pack()
         .sort(null)
         .size([width, height])
         .padding(3);
+    $scope.bubble = bubble;
     
     var svg = d3.select("#bubble-body").append("svg")
         .attr("width", width)
         .attr("height", height)
-        .attr("class", "bubble")
+        .attr("class", "bubble");
+    $scope.svg = svg;
 
     var generate_bubble = function(root){
       if($scope.predict.chartType=='popularity'){
@@ -181,13 +217,17 @@ var pdm = angular.module('pdm', [])
         el.title = title;
         return el;
       });
+
+
       var node = svg.selectAll(".node")
           .data(bubble.nodes(classes(root.results))
           .filter(function(d) { return !d.children; }))
           .enter().append("g")
             .attr("class", "node")
+            .attr("num_iid", function(d){return d.num_iid})
             .attr("transform", function(d) {
                return "translate(" + (d.x + margin_left) + "," + (d.y + margin_top) + ")"; })
+            .on("click", $scope.selectSku)
             .on("mouseover", function(){
               d3.select(this).selectAll("circle")
                 .style("stroke", "#428BCA")
@@ -220,16 +260,18 @@ var pdm = angular.module('pdm', [])
     
       return {children: classes};
     }
+    $scope.classes = classes;
 
     if($scope.predict.data.results.length > 0 || $scope.predict.data.items.length > 0){
         generate_bubble($scope.predict.data);
     }else{
       d3.json('/sales_stats', function(error, root) {
-        generate_bubble(root);
         $scope.predict.data = root;
+        generate_bubble(root);
         $scope.$apply();
       });
     }
+
   }
 
   $scope.init_chart = function(container, num_iid){
