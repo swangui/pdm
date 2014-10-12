@@ -7,6 +7,7 @@ var pdm = angular.module('pdm', [])
 .controller('HomeCtrl', function($scope, $http) {
   $scope.init_predict = function(){
     $scope.predict = {
+      blacklist: [],
       data: {items:{}, results:[]},
       chartType: 'popularity', //or demand
       viewType: 'bubble', //or grid
@@ -14,6 +15,9 @@ var pdm = angular.module('pdm', [])
       filteringMode: 'blacklist' //or whitelist
     };
 
+/*
+ * fix is needed for table head
+ *
     $(window).scroll(function(){
       if($('body').scrollTop() >= 318){
         $('.fixed-header').width($('.data-body').width()).show();
@@ -21,6 +25,8 @@ var pdm = angular.module('pdm', [])
         $('.fixed-header').hide();
       }
     });
+*/
+
 
     $('.filter-toggler').click(function(){
       var toggler = $(this);
@@ -38,15 +44,18 @@ var pdm = angular.module('pdm', [])
     $scope.set_op_mode = function(mode){
       if(mode=='blacklist'){
         $('.f-blacklist').next().hide().prev().trigger('click').effect('highlight', {color: '#428BCA'}, 500);
-      }else if(mode=='whitelist'){
-        $('.f-whitelist').next().hide().prev().trigger('click').effect('highlight', {color: '#428BCA'}, 500);
       }
       $scope.op_mode = mode;
       console.log('operating mode', $scope.op_mode);
     }
     console.log('init op_mode', $scope.op_mode);
 
-    $scope.gen_sales_bubble();
+    $.get('/get_blacklist', function(res){
+      console.log('blacklist', res.blacklist);
+      $scope.predict.blacklist = res.blacklist;
+      $scope.$apply();
+      $scope.gen_sales_bubble();
+    })
   }
 
 
@@ -148,7 +157,16 @@ var pdm = angular.module('pdm', [])
   $scope.set_chart_type = function(chartType){
     $scope.predict.chartType = chartType;
     if($scope.predict.viewType == 'bubble'){
-      $scope.gen_sales_bubble();
+      if($scope.predict.chartType=='popularity'){
+        $scope.predict.data.results.map(function(el){ el.value = el.popularity; return el; })
+      }else if($scope.predict.chartType=='demand'){
+        $scope.predict.data.results.map(function(el){ el.value = el.demand; return el; })
+      }
+      if($('svg').size()>0){
+        $scope.trans_bubble();
+      }else{
+        $scope.gen_sales_bubble();
+      }
     }
   }
 
@@ -156,31 +174,37 @@ var pdm = angular.module('pdm', [])
     var circle = $(this);
     num_iid = circle.attr('num_iid');
     if($scope.op_mode == 'blacklist'){
-      circle.remove();//hide();
+      var url = 'blacklist_insert';
+      $.post(url, {data:[num_iid]});
+      $scope.predict.blacklist.push(num_iid);
+      circle.remove();
       var updated = $.grep($scope.predict.data.results, function(d){ return d.num_iid!=num_iid });
       $scope.predict.data.results = updated;
+      $scope.$apply();
       $scope.trans_bubble();
     }
-  }
+  };
 
   $scope.trans_bubble = function(){
-      if($scope.predict.chartType=='popularity'){
-        $scope.predict.data.results.map(function(el){ el.value = el.popularity; return el; })
-      }else if($scope.predict.chartType=='demand'){
-        $scope.predict.data.results.map(function(el){ el.value = el.demand; return el; })
-      }
       var bubble = $scope.bubble;
       var svg = $scope.svg;
       var classes = $scope.classes;
       var node = svg.selectAll(".node")
           .data(bubble.nodes(classes($scope.predict.data.results))
-          .filter(function(d) { console.log(1); return !d.children; }))
+          .filter(function(d) { return !d.children; }))
           .transition()
             .attr("transform", function(d) {
                return "translate(" + (d.x + margin_left) + "," + (d.y + margin_top) + ")"; })
           .select("circle")
           .transition()
-            .attr("r", function(d) { console.log(d.r); return d.r; })
+            .attr("r", function(d) { return d.r; });
+
+          svg.selectAll(".node").select("text")
+            .text(function(d) { 
+              var title = d.title;
+              //return title;
+              return title.substring(0, d.r / 3);
+            });
             
   }
 
@@ -225,6 +249,7 @@ var pdm = angular.module('pdm', [])
           .enter().append("g")
             .attr("class", "node")
             .attr("num_iid", function(d){return d.num_iid})
+            .attr("title", function(d){return d.title})
             .attr("transform", function(d) {
                return "translate(" + (d.x + margin_left) + "," + (d.y + margin_top) + ")"; })
             .on("click", $scope.selectSku)
@@ -266,6 +291,7 @@ var pdm = angular.module('pdm', [])
         generate_bubble($scope.predict.data);
     }else{
       d3.json('/sales_stats', function(error, root) {
+        root = $scope.kickout_blacklist(root);
         $scope.predict.data = root;
         generate_bubble(root);
         $scope.$apply();
@@ -273,6 +299,15 @@ var pdm = angular.module('pdm', [])
     }
 
   }
+
+  $scope.kickout_blacklist = function(data){
+    console.log('before kickout', data);
+    data.results = $.grep(data.results, function(el){
+      return $scope.predict.blacklist.indexOf(el.num_iid)<0;
+    });
+    console.log('after kickout', data);
+    return data;
+  };
 
   $scope.init_chart = function(container, num_iid){
     console.log('init-ing chart');

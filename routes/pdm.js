@@ -78,6 +78,33 @@ exports.item_insert = function (req, res) {
     res.end();
 };
 
+exports.get_blacklist = function(req, res){
+  db.serialize(function() {
+    var blacklist = [];
+    db.each('select num_iid from blacklist;',
+      function(err, result){
+        blacklist.push(result.num_iid);
+      },
+      function(){
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.write(JSON.stringify({blacklist:blacklist}));
+        res.end();
+      }
+    )
+  })
+}
+
+exports.blacklist_insert = function(req, res){
+    var data = req.param('data');
+    data.forEach(function(num_iid){
+      var sql = 'insert into blacklist values("'+num_iid+'","");';
+      db.run(sql);
+    })
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.write(JSON.stringify({status:'blacklist completed'}));
+    res.end();
+};
+
 exports.trade_insert = function (req, res) {
     var data = req.param('data');
     var trade_import = function(data){
