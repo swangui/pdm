@@ -6,6 +6,9 @@ var pdm = angular.module('pdm', [])
 
 .controller('HomeCtrl', function($scope, $http) {
   $scope.init_predict = function(){
+    if( $('#bubble-body svg').size()>0 ){
+      return;
+    }
     $scope.predict = {
       blacklist: [],
       data: {items:{}, results:[]},
@@ -51,7 +54,6 @@ var pdm = angular.module('pdm', [])
     console.log('init op_mode', $scope.op_mode);
 
     $.get('/get_blacklist', function(res){
-      console.log('blacklist', res.blacklist);
       $scope.predict.blacklist = res.blacklist;
       $scope.$apply();
       $scope.gen_sales_bubble();
@@ -178,11 +180,38 @@ var pdm = angular.module('pdm', [])
       $.post(url, {data:[num_iid]});
       $scope.predict.blacklist.push(num_iid);
       circle.remove();
-      var updated = $.grep($scope.predict.data.results, function(d){ return d.num_iid!=num_iid });
+      var updated = $.grep($scope.predict.data.results, function(d){
+        if(d.num_iid == num_iid){
+          $scope.predict.blacklist_withdata.push(d);
+        }
+        return d.num_iid!=num_iid;
+      });
       $scope.predict.data.results = updated;
       $scope.$apply();
       $scope.trans_bubble();
     }
+  };
+
+  $scope.alter_blacklist = function(el, evt){
+    var pos = $scope.predict.blacklist_withdata.indexOf(el);
+    $scope.predict.blacklist_withdata.splice(pos,1);
+        pos = $scope.predict.blacklist.indexOf(el.num_iid);
+    $scope.predict.blacklist.splice(pos,1);
+    var bubble = $scope.bubble;
+    var classes = $scope.classes;
+    $scope.predict.data.results.splice(0,0,el);
+    $('g.node').appendTo($('#bubble-swap'));
+    $scope.generate_bubble($scope.predict.data);
+    $('g.node[num_iid='+el.num_iid+']').prependTo('#bubble-swap')
+      .find('circle').attr('r',0);
+    $('#bubble-body svg').html($('#bubble-swap').html());
+    $('#bubble-swap').html('');
+    $scope.trans_bubble();
+    var svg = $scope.svg;
+    var node = svg.selectAll(".node");
+    $scope.node_event(node);
+      var url = 'blacklist_delete';
+      $.post(url, {data:[el.num_iid]});
   };
 
   $scope.trans_bubble = function(){
@@ -208,6 +237,62 @@ var pdm = angular.module('pdm', [])
             
   }
 
+  $scope.generate_bubble = function(data){
+      var bubble = $scope.bubble;
+      var svg = $scope.svg;
+      var classes = $scope.classes;
+      if($scope.predict.chartType=='popularity'){
+        data.results.map(function(el){ el.value = el.popularity; return el; })
+      }else if($scope.predict.chartType=='demand'){
+        data.results.map(function(el){ el.value = el.demand; return el; })
+      }
+      var node = svg.selectAll(".node")
+          .data(bubble.nodes(classes(data.results))
+          .filter(function(d) { return !d.children; }))
+      $scope.append_circle(node);
+
+  };
+
+  $scope.node_event = function(node){
+        node.on("click", $scope.selectSku)
+            .on("mouseover", function(){
+              d3.select(this).selectAll("circle")
+                .style("stroke", "#428BCA")
+            })
+            .on("mouseout", function(){
+              d3.select(this).selectAll("circle")
+                .style("stroke", "#ccc")
+            });
+  }
+
+  $scope.append_circle = function(node){
+      node.enter().append("g")
+            .attr("class", "node")
+            .attr("num_iid", function(d){return d.num_iid})
+            .attr("title", function(d){return d.title})
+            .attr("transform", function(d) {
+               return "translate(" + (d.x + margin_left) + "," + (d.y + margin_top) + ")"; })
+
+      $scope.node_event(node);
+
+      node.append("circle")
+          .attr("r", function(d) { return d.r; })
+          .style("stroke", "#ccc")
+          .style("stroke-width", 2)
+          .style("fill", function(d) { return "#ccc"; });
+          //.style("fill", function(d) { return color(d.num_iid); });
+    
+      node.append("text")
+          .attr("dy", ".3em")
+          .style("text-anchor", "middle")
+          .text(function(d) { 
+            var title = d.title;
+            //return title;
+            return title.substring(0, d.r / 3);
+          });
+          //.text(function(d) { return d.num_iid.substring(0, d.r / 3); });
+  };
+
   $scope.gen_sales_bubble = function(){
     $("[data-toggle='tooltip']").tooltip();
 
@@ -226,74 +311,20 @@ var pdm = angular.module('pdm', [])
         .attr("class", "bubble");
     $scope.svg = svg;
 
-    var generate_bubble = function(root){
-      if($scope.predict.chartType=='popularity'){
-        root.results.map(function(el){ el.value = el.popularity; return el; })
-      }else if($scope.predict.chartType=='demand'){
-        root.results.map(function(el){ el.value = el.demand; return el; })
-      }
-      var dict = root.items;
-      root.results.map(function(el){
-        var title = dict[el.num_iid] || el.num_iid;
-        if(!/^\d+$/.test(title)){
-          title = title.replace(/^([a-zA-Z0-9]+).*/, '$1');
-        };
-        el.title = title;
-        return el;
-      });
-
-
-      var node = svg.selectAll(".node")
-          .data(bubble.nodes(classes(root.results))
-          .filter(function(d) { return !d.children; }))
-          .enter().append("g")
-            .attr("class", "node")
-            .attr("num_iid", function(d){return d.num_iid})
-            .attr("title", function(d){return d.title})
-            .attr("transform", function(d) {
-               return "translate(" + (d.x + margin_left) + "," + (d.y + margin_top) + ")"; })
-            .on("click", $scope.selectSku)
-            .on("mouseover", function(){
-              d3.select(this).selectAll("circle")
-                .style("stroke", "#428BCA")
-            })
-            .on("mouseout", function(){
-              d3.select(this).selectAll("circle")
-                .style("stroke", "#ccc")
-            });
-
-      node.append("circle")
-          .attr("r", function(d) { return d.r; })
-          .style("stroke", "#ccc")
-          .style("stroke-width", 2)
-          .style("fill", function(d) { return "#ccc"; });
-          //.style("fill", function(d) { return color(d.num_iid); });
-    
-      node.append("text")
-          .attr("dy", ".3em")
-          .style("text-anchor", "middle")
-          .text(function(d) { 
-            var title = d.title;
-            //return title;
-            return title.substring(0, d.r / 3);
-          });
-          //.text(function(d) { return d.num_iid.substring(0, d.r / 3); });
-    }
-
-    var classes = function(root) {
-      var classes = root;
+    var classes = function(data) {
+      var classes = data;
     
       return {children: classes};
     }
     $scope.classes = classes;
 
     if($scope.predict.data.results.length > 0 || $scope.predict.data.items.length > 0){
-        generate_bubble($scope.predict.data);
+        $scope.generate_bubble($scope.predict.data);
     }else{
-      d3.json('/sales_stats', function(error, root) {
-        root = $scope.kickout_blacklist(root);
-        $scope.predict.data = root;
-        generate_bubble(root);
+      d3.json('/sales_stats', function(error, data) {
+        data = $scope.kickout_blacklist(data);
+        $scope.predict.data = data;
+        $scope.generate_bubble(data);
         $scope.$apply();
       });
     }
@@ -301,11 +332,21 @@ var pdm = angular.module('pdm', [])
   }
 
   $scope.kickout_blacklist = function(data){
-    console.log('before kickout', data);
+    var blacklist_withdata = [];
+    var dict = data.items;
     data.results = $.grep(data.results, function(el){
-      return $scope.predict.blacklist.indexOf(el.num_iid)<0;
+      var title = dict[el.num_iid] || el.num_iid;
+      if(!/^\d+$/.test(title)){
+        title = title.replace(/^([a-zA-Z0-9]+).*/, '$1');
+      };
+      el.title = title;
+      var condition = $scope.predict.blacklist.indexOf(el.num_iid)<0;
+      if(!condition){
+        blacklist_withdata.push(el);
+      }
+      return condition;
     });
-    console.log('after kickout', data);
+    $scope.predict.blacklist_withdata = blacklist_withdata;
     return data;
   };
 

@@ -30,16 +30,26 @@
       </div>
     </div>
     <div id="bubble-body"></div>
+    <div id="bubble-swap"></div>
   </div>
   <div class="grids">
     <div class="block">
       <label class="f-blacklist filter-toggler">Blacklist &nbsp;<i class="fa fa-caret-right"></i></label>
       <table class="table" style="display:none;">
-        <tr><th class="icon-col"></th><th>Item Id</th><th>Name</th></tr>
-        <tr ng-repeat="b in predict.blacklist track by $index">
-          <td class="icon-col"><i class="fa fa-remove"></i></td>
-          <td>{%b%}</td>
-          <td>$Name</td>
+        <tr>
+          <th class="icon-col"></th>
+          <th>Name/Sku</th>
+          <th width="80" class="demand">Demand</th>
+          <th width="80" class="popularity">Popularity</th>
+          <th width="80">Stock</th></tr>
+        <tr ng-repeat="b in predict.blacklist_withdata track by $index">
+          <td class="icon-col">
+            <i class="fa fa-remove"
+               ng-click="alter_blacklist(b,evt)"></i></td>
+          <td>{%b.title%}</td>
+          <td>{%b.demand%}</td>
+          <td>{%b.popularity%}</td>
+          <td>{%b.stock%}</td>
         </tr>
       </table>
     </div>

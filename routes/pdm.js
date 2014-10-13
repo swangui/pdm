@@ -94,6 +94,17 @@ exports.get_blacklist = function(req, res){
   })
 }
 
+exports.blacklist_delete = function(req, res){
+    var data = req.param('data');
+    data.forEach(function(num_iid){
+      var sql = 'delete from blacklist where num_iid = "'+num_iid+'";';
+      db.run(sql);
+    })
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.write(JSON.stringify({status:'blacklist completed'}));
+    res.end();
+};
+
 exports.blacklist_insert = function(req, res){
     var data = req.param('data');
     data.forEach(function(num_iid){
