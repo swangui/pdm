@@ -3,6 +3,16 @@
  */
 
 var url = require("url");
+var csv = require("fast-csv");
+var price_ladder = [];
+csv
+ .fromPath("sku-set.csv")
+ .on("data", function(data){
+     price_ladder.push(data);
+ })
+ .on("end", function(){
+     console.log("price ladder loaded");
+ });
 
 var config = require("../appconfig").Config,
     appkey = config.AppKey,
@@ -25,7 +35,8 @@ exports.index = function (req, res) {
         app_secret:config.AppSecret,
         sign:SignInfo.sign,
         timestamp:SignInfo.timestamp,
-        params: params
+        params: params,
+        price_ladder: JSON.stringify(price_ladder)
     })
 
 

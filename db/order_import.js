@@ -8,7 +8,7 @@ var tb = fs.readFileSync('order_schema.js').toString();
   db.run("BEGIN TRANSACTION");
 var order_import = function(){
   db.serialize(function() {
-    db.each('select orders from trade;', function(err, row){
+    db.each('select orders from trade where orders != "undefined";', function(err, row){
       var orders = JSON.parse(row.orders).order;
       //console.log(orders);
       orders.forEach(function(order){

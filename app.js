@@ -8,6 +8,7 @@ var express = require('express')
     , path = require('path');
 
 routes.pdm = require('./routes/pdm');
+routes.survey = require('./routes/survey');
 
 var app = express();
 
@@ -43,6 +44,9 @@ app.get('/sales_stats', routes.pdm.sales_stats);
 app.get('/get_items', routes.pdm.get_items);
 app.get('/get_sales', routes.pdm.get_sales);
 app.get('/get_blacklist', routes.pdm.get_blacklist);
+
+app.post('/survey/receive', routes.survey.receive);
+app.get('/survey/lookup', routes.survey.lookup);
 
 
 http.createServer(app).listen(app.get('port'), function () {
