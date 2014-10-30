@@ -35,7 +35,11 @@ display_trade_details = function(tid){
         var html = '<tr>';
         html += '<td class="midtext">'+(i+1)+'</td>';
         html += '<td class="midtext">'+o.outer_iid.replace(/[#\$]/g,'')+'</td>';
+if(o.sku_properties_name){
         html += '<td class="midtext">'+o.sku_properties_name.replace(/,/,'').replace(/^.*\:/,'')+'</td>';
+}else{
+        html += '<td class="midtext">系统默认(缺颜色分类、条码)</td>';
+}
         var sku = o.outer_sku_id;
         if(sku && sku!='' && !/^111111111111/.test(sku)){
           html += '<td class="midtext bv" qty="'+o.num+'" cur="0" sku="'+o.outer_sku_id+'"><div class="bcode" sku="'+o.outer_sku_id+'"></div></td>';
